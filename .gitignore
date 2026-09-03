@@ -22,3 +22,11 @@ build/
 # Logs folder and log files
 .logs/
 logs/
+
+# Some results folders
+.btc_results/
+btc_results/
+.eth_results/
+eth_results/
+.xrp_results/
+xrp_results/

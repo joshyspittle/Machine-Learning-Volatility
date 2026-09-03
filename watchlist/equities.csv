@@ -1,0 +1,16 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass,Source
+AAPL,AAPL,Apple Inc.,Equities,Technology,Growth,yfinance
+MSFT,MSFT,Microsoft Corp.,Equities,Technology,Growth,yfinance
+GOOGL,GOOGL,Alphabet Inc. (Cl A),Equities,Comm-Services,Growth,yfinance
+AMZN,AMZN,Amazon.com Inc.,Equities,Cons-Discretionary,Growth,yfinance
+META,META,Meta Platforms Inc.,Equities,Comm-Services,Growth,yfinance
+NVDA,NVDA,NVIDIA Corp.,Equities,Technology,Semiconductors,yfinance
+TSLA,TSLA,Tesla Inc.,Equities,Cons-Discretionary,Growth,yfinance
+LMT,LMT,Lockheed Martin Corp.,Equities,Industrials,Defense,yfinance
+Snap,SNAP,Snap Inc.,Equities,Media,Social,yfinance
+TSM,TSM,Taiwan Semiconductor,Equities,Technology,Semiconductors,yfinance
+NFLX,NFLX,Netflix Inc.,Equities,Comm-Services,Growth,yfinance
+MSTR,MSTR,MicroStrategy Inc.,Equities,Technology,Software-BTC,yfinance
+JPM,JPM,JPMorgan Chase & Co.,Equities,Financials,Value,yfinance
+COST,COST,Costco Wholesale,Equities,Cons-Staples,Defensive,yfinance
+XOM,XOM,Exxon Mobil Corp.,Equities,Energy,Value,yfinance

@@ -1,0 +1,25 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass,Source
+SPY,SPY,S&P 500 ETF,Indices,Broad,US-LargeCap,yfinance
+SPX,^GSPC,S&P 500 Index,Indices,Broad,US-LargeCap,yfinance
+QQQ,QQQ,Nasdaq 100 ETF,Indices,Broad,US-Tech,yfinance
+NDX,^IXIC,Nasdaq Composite,Indices,Broad,US-Tech,yfinance
+DOW,^DJI,Dow Jones Industrial,Indices,Broad,US-MegaCap,yfinance
+IWM,IWM,Russell 2000 ETF,Indices,Broad,US-SmallCap,yfinance
+RTY,^RUT,Russell 2000 Index,Indices,Broad,US-SmallCap,yfinance
+DAX,^GDAXI,German DAX,Indices,Global,Europe,yfinance
+FTSE,^FTSE,London FTSE 100,Indices,Global,UK,yfinance
+NIKKEI,^N225,Nikkei 225,Indices,Global,Japan,yfinance
+HSI,^HSI,Hang Seng Index,Indices,Global,HongKong,yfinance
+TSX,^GSPTSE,S&P/TSX Composite,Indices,Global,Canada,yfinance
+ACWI,ACWI,MSCI ACWI Global ETF,Indices,Global,World,yfinance
+XLK,XLK,Technology Select Sector,Indices,Sector,Growth,yfinance
+XLF,XLF,Financial Select Sector,Indices,Sector,Value,yfinance
+XLV,XLV,Health Care Select Sector,Indices,Sector,Defensive,yfinance
+XLE,XLE,Energy Select Sector,Indices,Sector,Cyclical,yfinance
+XLY,XLY,Cons. Discretionary Sector,Indices,Sector,Cyclical,yfinance
+XLP,XLP,Consumer Staples Sector,Indices,Sector,Defensive,yfinance
+XLU,XLU,Utilities Select Sector,Indices,Sector,Defensive,yfinance
+XLC,XLC,Communication Services Sector,Indices,Sector,Growth,yfinance
+XLRE,XLRE,Real Estate Select Sector,Indices,Sector,Yield,yfinance
+XLB,XLB,Materials Select Sector,Indices,Sector,Cyclical,yfinance
+XLI,XLI,Industrials Select Sector,Indices,Sector,Cyclical,yfinance

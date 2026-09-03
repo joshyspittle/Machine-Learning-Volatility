@@ -1,0 +1,33 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass, Source
+VIX, ^VIX, CBOE Volatility Index, Economic Data, Index, Equity Volatility, yfinance
+OVERNIGHT, SOFR, Secured Overnight Financing Rate, Economic Data, Yield, Short-Term Rate, FRED
+US1MTB, DTB4WK, US 4-Week Treasury Bill Rate, Economic Data, Yield, Treasury Bill, FRED
+US3MTB, DGS3MO, US 3-Month Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Bill, FRED
+US6MTB, DGS6MO, US 6-Month Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Bill, FRED
+US01Y, DGS1, US 1-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US02Y, DGS2, US 2-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US03Y, DGS3, US 3-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US05Y, DGS5, US 5-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US07Y, DGS7, US 7-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US10Y, DGS10, US 10-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US20Y, DGS20, US 20-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+US30Y, DGS30, US 30-Year Treasury Constant Maturity Rate, Economic Data, Yield, Treasury Note/Bond, FRED
+FEDFUNDS, FEDFUNDS, Effective Federal Funds Rate, Economic Data, Interest Rate, Monetary Policy, FRED
+GDPR, GDPC1, Real Gross Domestic Product, Economic Data, Economic, Growth (SAAR), FRED
+GDPN, GDP, Nominal Gross Domestic Product, Economic Data, Economic, Growth (SAAR), FRED
+CPIH, CPIAUCSL, Consumer Price Index for All Urban Consumers (Headline), Economic Data, Economic, Inflation, FRED
+CPIC, CPILFENS, Consumer Price Index (Less Food and Energy / Core), Economic Data, Economic, Inflation, FRED
+PPIH, PPIACO, Producer Price Index - All Commodities (Headline), Economic Data, Economic, Inflation, FRED
+PPIC, WPSFD4131, Producer Price Index - Finished Goods (Core), Economic Data, Economic, Inflation, FRED
+NFP, PAYEMS, Total Nonfarm Payrolls (Establishment Survey), Economic Data, Economic, Employment, FRED
+LABOUR_PART, CIVPART, Labor Force Participation Rate, Economic Data, Economic, Employment, FRED
+UNEMPLOYMENTR, UNRATE, Unemployment Rate, Economic Data, Economic, Employment, FRED
+JOLTS, JTSJOL, Job Openings: Total Nonfarm, Economic Data, Economic, Employment, FRED
+USM1, M1SL, M1 Money Stock, Economic Data, Economic, Money Supply, FRED
+USM2, M2SL, M2 Money Stock, Economic Data, Economic, Money Supply, FRED
+HOUSINGSTARTS, HOUST, Housing Starts: Total Units, Economic Data, Economic, Housing, FRED
+BUILDINGPERMS, PERMIT, Housing Units Authorized by Building Permits: Total Units, Economic Data, Economic, Housing, FRED
+NEWHOMESALES, HSN1F, New One Family Houses Sold: United States, Economic Data, Economic, Housing, FRED
+PMI, PMI_ISM_MANU, ISM Manufacturing PMI (Scrape required), Economic Data, Economic, Sentiment, Scrape
+CCI, UMCSENT, University of Michigan Consumer Sentiment Index, Economic Data, Economic, Sentiment, FRED
+

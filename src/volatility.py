@@ -9,7 +9,7 @@ Conventions:
 import numpy as np
 import pandas as pd
 
-import src.analytics as analytics
+import feature_engineering as feature_engineering
 
 from arch import arch_model
 
@@ -22,7 +22,7 @@ def garch(close_series: pd.Series) -> float:
     estimators such as Parkinson and absolute-return volatility.
     """
 
-    returns = analytics.get_returns(close_series).dropna()
+    returns = feature_engineering.get_returns(close_series).dropna()
     scaled_returns = returns * 100
 
     garch_model = arch_model(
@@ -44,7 +44,7 @@ def garch(close_series: pd.Series) -> float:
 def garch_forecast(close_series: pd.Series, window_size: int) -> pd.Series:
     """Return rolling one-step-ahead GARCH(1,1) volatility forecasts."""
 
-    forecast = analytics.rolling_parallel(garch, close_series, window_size)['Value']
+    forecast = feature_engineering.rolling_parallel(garch, close_series, window_size)['Value']
     forecast = forecast.shift(1).dropna()
     forecast.name = 'GARCH(1,1)'
 
@@ -78,7 +78,7 @@ def naive_avg_forecast(realised_vol: pd.Series, window_size: int) -> pd.Series:
 def realised_absolute_vol(close_series: pd.Series) -> pd.Series:
     """Return absolute log-return volatility in daily percentage points."""
 
-    abs_log_returns = np.abs(analytics.get_returns(close_series)) * 100
+    abs_log_returns = np.abs(feature_engineering.get_returns(close_series)) * 100
     abs_log_returns.name = 'RAV'
 
     return abs_log_returns
@@ -126,15 +126,3 @@ def qlike_loss(forecast: pd.Series, realised: pd.Series) -> float:
     qlike = np.mean((realised_var / forecast_var) - np.log(realised_var / forecast_var) - 1)
 
     return float(qlike)
-
-
-def evaluate(forecast: pd.Series, realised: pd.Series) -> dict[str, float]:
-    """Return forecast accuracy metrics after aligning forecast and realised data."""
-
-    aligned = pd.DataFrame({'forecast': forecast, 'realised': realised}).dropna()
-
-    return {
-        'qlike': qlike_loss(aligned['forecast'], aligned['realised']),
-        'mse': mse_loss(aligned['forecast'], aligned['realised']),
-        'mae': mae_loss(aligned['forecast'], aligned['realised'])
-    }
