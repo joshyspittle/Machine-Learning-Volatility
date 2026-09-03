@@ -13,8 +13,127 @@ import numpy as np
 import pandas as pd
 
 import src.paths as paths
+from data import load_data
+import src.volatility as volatility
 
 PriceData: TypeAlias = pd.Series | pd.DataFrame
+
+
+FEATURES = [
+    # VIX lags
+    'VIX_0',
+    'VIX_1',
+    'VIX_2',
+    'VIX_5',
+    'VIX_10',
+    'VIX_20',
+    'VIX_60',
+    'VIX_120',
+
+    # Realised volatility lags
+    'Realised_vol_0',
+    'Realised_vol_1',
+    'Realised_vol_2',
+    'Realised_vol_5',
+    'Realised_vol_10',
+    'Realised_vol_20',
+    'Realised_vol_60',
+    'Realised_vol_120',
+
+    # Return lags
+    'Returns_0',
+    'Returns_1',
+    'Returns_2',
+    'Returns_5',
+    'Returns_10',
+    'Returns_20',
+    'Returns_60',
+    'Returns_120',
+
+    # Volatility moving averages
+    'Vol_7_sma',
+    'Vol_14_sma',
+    'Vol_21_sma',
+    'Vol_50_sma',
+    'Vol_200_sma',
+
+    'Vol_7_ema',
+    'Vol_14_ema',
+    'Vol_21_ema',
+    'Vol_50_ema',
+    'Vol_200_ema',
+
+    # Price moving averages
+    'Price_7_sma',
+    'Price_14_sma',
+    'Price_21_sma',
+    'Price_50_sma',
+    'Price_200_sma',
+
+    'Price_7_ema',
+    'Price_14_ema',
+    'Price_21_ema',
+    'Price_50_ema',
+    'Price_200_ema',
+
+    # Price relative to moving averages
+    'Price_vs_sma7',
+    'Price_vs_sma21',
+    'Price_vs_sma50',
+    'Price_vs_sma200',
+
+    # Calendar
+    'dayofweek',
+    'quarter',
+    'month',
+    'year',
+    'dayofyear',
+    'dayofmonth',
+    'weekofyear',
+]
+
+TARGET = 'Parkinson'
+
+def build_ml_features(ohlcv_series: pd.DataFrame) -> pd.DataFrame:
+    """Return model-ready features and the Parkinson volatility target."""
+
+    df = ohlcv_series.copy()
+    realised_vol = volatility.parkinson_vol(df)
+
+    df['Parkinson'] = realised_vol
+
+    lags = [0, 1, 2, 5, 10, 20, 60, 120]
+
+    for lag in lags:
+        vix = load_data(paths.MACRO_DATA_PARQUET, '1d')['VIX']['Close']
+        df[f'VIX_{lag}'] = vix.reindex(df.index).ffill().shift(lag+1)
+
+        df[f'Realised_vol_{lag}'] = realised_vol.shift(lag+1)
+
+        df[f'Returns_{lag}'] = get_returns(df['Close']).shift(lag+1)
+
+    ma_days = [7, 14, 21, 50, 200]
+
+    for moving_average in ma_days:
+        df[f'Vol_{moving_average}_sma'] = sma(realised_vol, moving_average).shift(1)
+        df[f'Vol_{moving_average}_ema'] = ema(realised_vol, moving_average).shift(1)
+        df[f'Price_{moving_average}_sma'] = ema(df['Close'], moving_average).shift(1)
+        df[f'Price_{moving_average}_ema'] = ema(df['Close'], moving_average).shift(1)
+
+    df['Price_vs_sma7'] = df['Close'].shift(1)/df['Price_7_sma']
+    df['Price_vs_sma21'] = df['Close'].shift(1)/df['Price_21_sma']
+    df['Price_vs_sma50'] = df['Close'].shift(1)/df['Price_50_sma']
+    df['Price_vs_sma200'] = df['Close'].shift(1)/df['Price_200_sma']
+
+    df['dayofweek'] = df.index.dayofweek
+    df['quarter'] = df.index.quarter
+    df['month'] = df.index.month
+    df['year'] = df.index.year
+    df['dayofyear'] = df.index.dayofyear
+    df['dayofmonth'] = df.index.day
+    df['weekofyear'] = df.index.isocalendar().week
+
+    return df
 
 
 def get_returns(
@@ -128,89 +247,3 @@ def macd(
         'Signal': signal_line,
         'Histogram': histogram,
     })
-
-
-def calculate_cagr(close_series: pd.Series) -> float:
-    """Return compound annual growth rate over the supplied window."""
-
-    initial_price = close_series.iloc[0]
-    final_price = close_series.iloc[-1]
-
-    duration_days = (close_series.index[-1] - close_series.index[0]).days
-    duration_years = duration_days / 365.25
-
-    cagr = (final_price / initial_price) ** (1 / duration_years) - 1
-    return float(cagr)
-
-
-def calculate_sharpe_ratio(
-    close_series: pd.Series,
-    start_date: str | pd.Timestamp | None = None,
-    end_date: str | pd.Timestamp | None = None,
-) -> float:
-    """Return the annualised Sharpe ratio using ``US01Y`` as the risk-free proxy."""
-
-    df_macro = pd.read_csv(paths.MACRO_DATA_PARQUET, index_col=0, parse_dates=True).loc[start_date:end_date]
-    returns = get_returns(close_series, return_type='simple')
-    risk_free_return = (df_macro['US01Y'] / (100 * 365.25)).reindex(close_series.index).ffill()
-
-    excess_returns = returns - risk_free_return
-    volatility = np.std(excess_returns, ddof=1)
-
-    sharpe_ratio = excess_returns.mean() / volatility * np.sqrt(365.25)
-    return float(sharpe_ratio)
-
-
-def calculate_sortino_ratio(
-    close_series: pd.Series,
-    start_date: str | pd.Timestamp | None = None,
-    end_date: str | pd.Timestamp | None = None,
-) -> float:
-    """Return the annualised Sortino ratio using downside volatility only."""
-
-    df = pd.read_csv(paths.MACRO_DATA_PARQUET, index_col=0, parse_dates=True).loc[start_date:end_date]
-    risk_free_return = df['US01Y'].mean() / 100
-    risk_free_daily_return = risk_free_return / 365.25
-
-    returns = get_returns(close_series, return_type='simple')
-    mean_return = returns.mean() * 365.25
-    downside_returns = returns[returns < risk_free_daily_return]
-    print('risk free daily', risk_free_daily_return)
-    downside_volatility = downside_returns.std(ddof=1) * np.sqrt(365.25)
-
-    sortino_ratio = (mean_return - risk_free_return) / downside_volatility
-    return float(sortino_ratio)
-
-
-def max_drawdown(
-    ohlcv_data: pd.Series | pd.DataFrame,
-    start_date: str | pd.Timestamp | None = None,
-    end_date: str | pd.Timestamp | None = None,
-    return_type: Literal['close-to-close', 'high-to-low'] = 'close-to-close',
-) -> tuple[float, pd.Timestamp, pd.Timestamp]:
-    """Return maximum drawdown plus the peak and trough dates."""
-
-    ohlc_cols = {'Open', 'High', 'Low', 'Close'}
-    is_ohlcv = isinstance(ohlcv_data, pd.DataFrame) and ohlc_cols.issubset(ohlcv_data.columns)
-
-    if return_type == 'high-to-low' and not is_ohlcv:
-        raise ValueError("return_type: 'high-to-low' requires full OHLCV data")
-
-    if return_type == 'high-to-low':
-        peak_series = ohlcv_data['High']
-        trough_series = ohlcv_data['Low']
-    else:
-        if is_ohlcv:
-            peak_series = ohlcv_data['Close']
-        else:
-            peak_series = ohlcv_data
-        trough_series = peak_series
-
-    rolling_max = peak_series.cummax()
-    drawdown = (trough_series - rolling_max) / rolling_max
-
-    max_dd = drawdown.min()
-    trough = drawdown.idxmin()
-    peak = peak_series[:trough].idxmax()
-
-    return max_dd, peak, trough

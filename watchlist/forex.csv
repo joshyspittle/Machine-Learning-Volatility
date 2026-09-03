@@ -1,0 +1,7 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass,Source
+DXY,DX-Y.NYB,US Dollar Index,Forex,Index,Basket,yfinance
+EXY,^XDE,Euro Currency Index,Forex,Index,Basket,yfinance
+BXY,^XDB,British Pound Index,Forex,Index,Basket,yfinance
+JXY,^XDN,Japanese Yen Index,Forex,Index,Basket,yfinance
+AXY,^XDA,Australian Dollar Index,Forex,Index,Basket,yfinance
+CXY,^XDC,Canadian Dollar Index,Forex,Index,Basket,yfinance

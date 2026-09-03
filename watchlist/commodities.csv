@@ -1,0 +1,11 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass,Source
+Gold,GC=F,Gold Futures,Commodities,Metals,Precious,yfinance
+Silver,SI=F,Silver Futures,Commodities,Metals,Precious,yfinance
+Copper,HG=F,Copper Futures,Commodities,Metals,Industrial,yfinance
+Crude,CL=F,WTI Crude Oil,Commodities,Energy,Petroleum,yfinance
+Brent,BZ=F,Brent Crude Oil,Commodities,Energy,Petroleum,yfinance
+Natgas,NG=F,Natural Gas,Commodities,Energy,Gas,yfinance
+Corn,ZC=F,Corn Futures,Commodities,Agriculture,Grains,yfinance
+Wheat,ZW=F,Wheat Futures,Commodities,Agriculture,Grains,yfinance
+Soy,ZS=F,Soybeans Futures,Commodities,Agriculture,Oilseeds,yfinance
+Coffee,KC=F,Coffee Futures,Commodities,Agriculture,Softs,yfinance

@@ -4,14 +4,10 @@ This file is not part of the production pipeline. It is used to load local
 data, try out analysis functions, and preview charts while iterating.
 """
 
-import pandas as pd
-import numpy as np
-import src.analytics as analytics
 import src.paths as paths
-import src.simulation as simulation
 import src.volatility as volatility
 import src.machine_learning as ml
-from src.data_getter import load_data
+from data import load_data
 
 import matplotlib.pyplot as plt
 import xgboost as xgb

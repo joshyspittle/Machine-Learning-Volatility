@@ -1,0 +1,30 @@
+Identifier,Ticker,Full_Name,Category,Class,Subclass,Source
+BTC,BTC-USD,Bitcoin,Crypto,L1,Currency,yfinance
+ETH,ETH-USD,Ethereum,Crypto,L1,Ecosystem,yfinance
+DOGE,DOGE-USD,Dogecoin,Crypto,L1,Memecoin,yfinance
+PEPE,PEPE24478-USD,Pepe,Crypto,ERC-20,Memecoin,yfinance
+WIF,WIF-USD,dogwifhat,Crypto,SPL,Memecoin,yfinance
+LINK,LINK-USD,Chainlink,Crypto,ERC-20,Infrastructure,yfinance
+XRP,XRP-USD,XRP,Crypto,L1,Payment,yfinance
+CRV,CRV-USD,Curve DAO,Crypto,ERC-20,DeFi,yfinance
+PENDLE,PENDLE-USD,Pendle,Crypto,ERC-20,DeFi,yfinance
+AAVE,AAVE-USD,Aave,Crypto,ERC-20,DeFi,yfinance
+DOT,DOT-USD,Polkadot,Crypto,L0,Ecosystem,yfinance
+ADA,ADA-USD,Cardano,Crypto,L1,Ecosystem,yfinance
+AVAX,AVAX-USD,Avalanche,Crypto,L1,Ecosystem,yfinance
+LTC,LTC-USD,Litecoin,Crypto,L1,Currency,yfinance
+HBAR,HBAR-USD,Hedera,Crypto,L1,Ecosystem,yfinance
+XMR,XMR-USD,Monero,Crypto,L1,Privacy,yfinance
+ZEC,ZEC-USD,Zcash,Crypto,L1,Privacy,yfinance
+XLM,XLM-USD,Stellar Lumens,Crypto,L1,Payment,yfinance
+FET,FET-USD,ASI Alliance,Crypto,ERC-20,AI,yfinance
+RENDER,RENDER-USD,Render Token,Crypto,SPL,DePIN,yfinance
+TAO,TAO22974-USD,Bittensor,Crypto,L1,AI,yfinance
+WLD,WLD-USD,Worldcoin,Crypto,ERC-20,AI,yfinance
+MOG,MOG-USD,Mog Coin,Crypto,ERC-20,Memecoin,yfinance
+UNI,UNI7083-USD,Uniswap,Crypto,ERC-20,DeFi,yfinance
+NEAR,NEAR-USD,NEAR Protocol,Crytpo,L1,Ecosystem,yfinance
+CVX,CVX-USD,Convex Finance,Crypto,ERC-20,DeFI,yfinance
+TRAC,TRAC-USD,Origin Trail,Crypto,ERC-20,AI,yfinance
+MON,MON30495-USD,Monad,Crypto,L1,Ecosystem,yfinance
+COSMOS,ATOM-USD,Cosmos,Crypto,L1,Ecosystem,yfinance
