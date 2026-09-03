@@ -9,7 +9,7 @@ Conventions:
 import numpy as np
 import pandas as pd
 
-import feature_engineering as feature_engineering
+import src.feature_engineering as fe
 
 from arch import arch_model
 
@@ -22,7 +22,7 @@ def garch(close_series: pd.Series) -> float:
     estimators such as Parkinson and absolute-return volatility.
     """
 
-    returns = feature_engineering.get_returns(close_series).dropna()
+    returns = fe.get_returns(close_series).dropna()
     scaled_returns = returns * 100
 
     garch_model = arch_model(
@@ -44,7 +44,7 @@ def garch(close_series: pd.Series) -> float:
 def garch_forecast(close_series: pd.Series, window_size: int) -> pd.Series:
     """Return rolling one-step-ahead GARCH(1,1) volatility forecasts."""
 
-    forecast = feature_engineering.rolling_parallel(garch, close_series, window_size)['Value']
+    forecast = fe.rolling_parallel(garch, close_series, window_size)['Value']
     forecast = forecast.shift(1).dropna()
     forecast.name = 'GARCH(1,1)'
 
@@ -78,7 +78,7 @@ def naive_avg_forecast(realised_vol: pd.Series, window_size: int) -> pd.Series:
 def realised_absolute_vol(close_series: pd.Series) -> pd.Series:
     """Return absolute log-return volatility in daily percentage points."""
 
-    abs_log_returns = np.abs(feature_engineering.get_returns(close_series)) * 100
+    abs_log_returns = np.abs(fe.get_returns(close_series)) * 100
     abs_log_returns.name = 'RAV'
 
     return abs_log_returns

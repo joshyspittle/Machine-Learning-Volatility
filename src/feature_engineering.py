@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 import src.paths as paths
-from data import load_data
+from src.data import load_data
 import src.volatility as volatility
 
 PriceData: TypeAlias = pd.Series | pd.DataFrame
