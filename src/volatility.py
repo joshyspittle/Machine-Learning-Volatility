@@ -85,7 +85,7 @@ def realised_absolute_vol(close_series: pd.Series) -> pd.Series:
 
 
 def parkinson_vol(ohlcv_data: pd.DataFrame) -> pd.Series:
-    """Return Parkinson high-low volatility in daily percentage points."""
+    """Return the daily Parkinson volatility estimate in percentage points."""
 
     x = np.log(ohlcv_data['High'] / ohlcv_data['Low']) ** 2
     parkinson_var = x / (4 * np.log(2))
