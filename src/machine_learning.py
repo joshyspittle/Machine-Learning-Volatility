@@ -71,7 +71,7 @@ def train_model(train_data: TrainData) -> xgb.XGBRegressor:
                         learning_rate=0.01)
     model.fit(x_fit, y_fit, 
             eval_set=[(x_fit, y_fit), (x_val, y_val)],
-            verbose=100)
+            verbose=0)
 
     return model
 
@@ -207,7 +207,7 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
         test_data = {'x_test': forecast_df[fe.FEATURES], 'y_test': forecast_df[fe.TARGET]}
 
         model = train_model(train_data)
-        forecast = forecast_model(test_data, model, features_df)
+        forecast = forecast_model(test_data, model)
         forecasts.append(forecast)
 
         print(f"Trained rows 0-{train_end-1} ({train_end} days) -> "
@@ -250,7 +250,7 @@ def plot_walk_forward(realised_vol, forecasts, per_block, asset):
     forecasts.plot(ax=ax, style='.')
     plt.legend(['Ground Data', 'Predictions'])
     ax.set_title(f'Ground Data and Predictions: {asset}')
-    plt.savefig(f'RealisedVsPredicted({asset}).png')
+    #plt.savefig(f'RealisedVsPredicted({asset}).png')
     plt.show()
 
     block_labels = list(per_block.keys())
@@ -267,5 +267,5 @@ def plot_walk_forward(realised_vol, forecasts, per_block, asset):
     ax.plot(block_dates, garch_qlike, marker='o', label='GARCH(1,1)')
     ax.set_title(f'QLIKE per Block: {asset}')
     ax.legend()
-    plt.savefig(f'MLvsGARCH(QLIKE)({asset}).png')
+    #plt.savefig(f'MLvsGARCH(QLIKE)({asset}).png')
     plt.show()
