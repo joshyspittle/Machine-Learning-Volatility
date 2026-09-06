@@ -150,12 +150,12 @@ def run_static_comparison(ohlcv_series: pd.DataFrame) -> EvaluationResults:
     return {'model': model, 'ml_forecast': ml_forecast, 'results': results}
 
 
-def plot_feature_importance(model):
+def plot_feature_importance(model, no_of_features=10):
 
     fi = pd.DataFrame(data=model.feature_importances_,
                 index=model.feature_names_in_,
                 columns=['importance'])
-    fi.sort_values('importance').plot(kind='barh', title='Feature Importance')
+    fi.sort_values('importance').tail(no_of_features).plot(kind='barh', title='Feature Importance')
     #plt.savefig('2014 fi')
     plt.show()
 
@@ -169,6 +169,16 @@ def plot_predictions_vs_realised(forecast, features_df):
     plt.legend(['Truth Data', 'Predictions'])
     ax.set_title('Raw Data and Predictions')
     #plt.savefig('2014 forecast')
+    plt.show()
+
+    start_date = forecast.index.min()
+    forecast_period_df = features_df.loc[start_date:]
+
+    ax = forecast_period_df[['Parkinson']].plot(figsize=(15,5))
+    forecast_period_df['Prediction'].plot(ax=ax, style='.')
+    
+    plt.legend(['Truth Data', 'Predictions'])
+    ax.set_title('Raw Data and Predictions (Forecast Period)')
     plt.show()
 
 
