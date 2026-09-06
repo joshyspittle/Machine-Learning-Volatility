@@ -12,7 +12,6 @@ import src.volatility as volatility
 
 ForecastMap: TypeAlias = dict[str, pd.Series]
 EvaluationResults: TypeAlias = dict[str, dict[str, float]]
-HalvedEvaluationResults: TypeAlias = dict[str, EvaluationResults]
 
 
 class TrainData(TypedDict):
@@ -64,46 +63,45 @@ def train_model(train_data: TrainData) -> xgb.XGBRegressor:
     x_val = train_data['x_val']
     y_val = train_data['y_val']
 
-    reg = xgb.XGBRegressor(base_score=0.5, booster='gbtree',
+    model = xgb.XGBRegressor(base_score=0.5, booster='gbtree',
                         n_estimators=1000,
                         early_stopping_rounds=50,
                         objective='reg:squarederror',
                         max_depth=3,
                         learning_rate=0.01)
-    reg.fit(x_fit, y_fit, 
+    model.fit(x_fit, y_fit, 
             eval_set=[(x_fit, y_fit), (x_val, y_val)],
             verbose=100)
 
-    return reg
+    return model
 
 
 def forecast_model(
     test_data: TestData,
-    reg: xgb.XGBRegressor,
-    features_df: pd.DataFrame,
-    plot: bool = False
+    model: xgb.XGBRegressor
 ) -> pd.Series:
     """Forecast test-period volatility and plot predictions against realised values."""
 
     x_test = test_data['x_test']
 
-    predictions = pd.Series(reg.predict(x_test), index=x_test.index, name='Prediction')
-    features_df = features_df.merge(predictions, how='left', left_index=True, right_index=True)
-
-    if plot:
-        ax = features_df[['Parkinson']].plot(figsize=(15,5))
-        features_df['Prediction'].plot(ax=ax, style='.')
-        plt.legend(['Truth Data', 'Predictions'])
-        ax.set_title('Raw Data and Predictions')
-        plt.savefig('2014 forecast')
-        plt.show()
-
-    forecast = features_df['Prediction'].dropna()
+    forecast = pd.Series(model.predict(x_test), index=x_test.index, name='Prediction').dropna()
 
     return forecast
 
 
-def evaluate_forecasts(
+def score_forecast(forecast: pd.Series, realised: pd.Series) -> dict[str, float]:
+    """Return forecast accuracy metrics after aligning forecast and realised data."""
+
+    aligned = pd.DataFrame({'forecast': forecast, 'realised': realised}).dropna()
+
+    return {
+        'qlike': volatility.qlike_loss(aligned['forecast'], aligned['realised']),
+        'mse': volatility.mse_loss(aligned['forecast'], aligned['realised']),
+        'mae': volatility.mae_loss(aligned['forecast'], aligned['realised'])
+    }
+
+
+def compare_forecasts(
     forecasts: ForecastMap,
     realised: pd.Series,
     start_date: str | pd.Timestamp = '2024-01-01',
@@ -116,7 +114,7 @@ def evaluate_forecasts(
 
     aligned_realised = realised.loc[eval_index]
     results = {
-        name: volatility.evaluate(forecast.loc[eval_index], aligned_realised)
+        name: score_forecast(forecast.loc[eval_index], aligned_realised)
         for name, forecast in forecasts.items()
     }
 
@@ -128,41 +126,7 @@ def evaluate_forecasts(
     return results
 
 
-def evaluate_forecast_halves(
-    forecasts: ForecastMap,
-    realised: pd.Series,
-    start_date: str | pd.Timestamp,
-) -> HalvedEvaluationResults:
-    """Evaluate aligned forecasts over the first and second test halves."""
-
-    eval_index = realised.loc[start_date:].dropna().index
-    for forecast in forecasts.values():
-        eval_index = eval_index.intersection(forecast.dropna().index)
-
-    midpoint = len(eval_index) // 2
-    halves = {
-        'First half': eval_index[:midpoint],
-        'Second half': eval_index[midpoint:],
-    }
-
-    results = {}
-    for half_name, half_index in halves.items():
-        aligned_realised = realised.loc[half_index]
-        results[half_name] = {
-            name: volatility.evaluate(forecast.loc[half_index], aligned_realised)
-            for name, forecast in forecasts.items()
-        }
-        print(
-            f"{half_name} dates: {half_index.min().date()} to "
-            f"{half_index.max().date()} ({len(half_index)} observations)"
-        )
-
-    return results
-
-
-def evaluate(ohlcv_series: pd.DataFrame,
-             plot: bool = False,
-             feature_importance: bool = False) -> EvaluationResults:
+def run_static_comparison(ohlcv_series: pd.DataFrame) -> EvaluationResults:
     """Train the ML model and compare it with benchmark volatility forecasts."""
 
     close_series = ohlcv_series['Close']
@@ -172,7 +136,7 @@ def evaluate(ohlcv_series: pd.DataFrame,
     features_df = fe.build_ml_features(ohlcv_series)
     train_data, test_data = split_train_test(features_df)
     model = train_model(train_data)
-    ml_forecast = forecast_model(test_data, model, features_df, plot)
+    ml_forecast = forecast_model(test_data, model, features_df)
 
     forecasts = {
         'GARCH(1,1)': volatility.garch_forecast(close_series, 500),
@@ -181,17 +145,31 @@ def evaluate(ohlcv_series: pd.DataFrame,
         'ML Model': ml_forecast,
     }
 
-    results = evaluate_forecasts(forecasts, realised_vol)
+    results = compare_forecasts(forecasts, realised_vol)
 
-    if feature_importance:
-        fi = pd.DataFrame(data=model.feature_importances_,
-                    index=model.feature_names_in_,
-                    columns=['importance'])
-        fi.sort_values('importance').plot(kind='barh', title='Feature Importance')
-        plt.savefig('2014 fi')
-        plt.show()
+    return {'model': model, 'ml_forecast': ml_forecast, 'results': results}
 
-    return results
+
+def plot_feature_importance(model):
+
+    fi = pd.DataFrame(data=model.feature_importances_,
+                index=model.feature_names_in_,
+                columns=['importance'])
+    fi.sort_values('importance').plot(kind='barh', title='Feature Importance')
+    #plt.savefig('2014 fi')
+    plt.show()
+
+
+def plot_predictions_vs_realised(forecast, features_df):
+
+    features_df = features_df.merge(forecast, how='left', left_index=True, right_index=True)
+
+    ax = features_df[['Parkinson']].plot(figsize=(15,5))
+    features_df['Prediction'].plot(ax=ax, style='.')
+    plt.legend(['Truth Data', 'Predictions'])
+    ax.set_title('Raw Data and Predictions')
+    #plt.savefig('2014 forecast')
+    plt.show()
 
 
 def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd.Series]:
@@ -219,7 +197,7 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
         test_data = {'x_test': forecast_df[fe.FEATURES], 'y_test': forecast_df[fe.TARGET]}
 
         model = train_model(train_data)
-        forecast = forecast_model(test_data, model, features_df, plot=False)
+        forecast = forecast_model(test_data, model, features_df)
         forecasts.append(forecast)
 
         print(f"Trained rows 0-{train_end-1} ({train_end} days) -> "
@@ -228,7 +206,7 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
     return forecasts
 
 
-def evaluate_walk_forward(ohlcv_series):
+def run_walk_forward_comparison(ohlcv_series):
 
     close_series = ohlcv_series['Close']
     realised_vol = volatility.parkinson_vol(ohlcv_series)
@@ -245,11 +223,11 @@ def evaluate_walk_forward(ohlcv_series):
     for i, forecast in enumerate(forecasts):
         block_label = f"Block {i + 1} ({forecast.index.min().date()})"
         block_forecasts = benchmarks | {'ML Model': forecast}
-        per_block_results[block_label] = evaluate_forecasts(block_forecasts, realised_vol, forecast.index.min())
+        per_block_results[block_label] = compare_forecasts(block_forecasts, realised_vol, forecast.index.min())
 
     combined = pd.concat(forecasts).rename('ML Model (Walk-Forward)')
     combined_forecasts = benchmarks | {'ML Model (Walk-Forward)': combined}
-    combined_results = evaluate_forecasts(combined_forecasts, realised_vol, combined.index.min().date())
+    combined_results = compare_forecasts(combined_forecasts, realised_vol, combined.index.min().date())
 
     return per_block_results, combined_results, combined
 
@@ -281,5 +259,3 @@ def plot_walk_forward(realised_vol, forecasts, per_block, asset):
     ax.legend()
     plt.savefig(f'MLvsGARCH(QLIKE)({asset}).png')
     plt.show()
-
-    return None
