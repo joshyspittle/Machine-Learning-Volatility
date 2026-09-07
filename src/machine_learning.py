@@ -118,10 +118,10 @@ def compare_forecasts(
         for name, forecast in forecasts.items()
     }
 
-    print(
-        f"Evaluation dates: {eval_index.min().date()} to {eval_index.max().date()} "
-        f"({len(eval_index)} observations)"
-    )
+    # print(
+    #     f"Evaluation dates: {eval_index.min().date()} to {eval_index.max().date()} "
+    #     f"({len(eval_index)} observations)"
+    # )
 
     return results
 
@@ -150,6 +150,11 @@ def run_static_comparison(ohlcv_series: pd.DataFrame) -> EvaluationResults:
     return {'model': model, 'ml_forecast': ml_forecast, 'results': results}
 
 
+def filter_forecasts(forecasts: ForecastMap, start: str, end: str) -> ForecastMap:
+    """Return each forecast series restricted to the given date range."""
+    return {name: forecast.loc[start:end] for name, forecast in forecasts.items()}
+
+
 def plot_feature_importance(model, no_of_features=10):
 
     fi = pd.DataFrame(data=model.feature_importances_,
@@ -160,25 +165,20 @@ def plot_feature_importance(model, no_of_features=10):
     plt.show()
 
 
-def plot_predictions_vs_realised(forecast, features_df):
+def plot_predictions_vs_realised(realised: pd.Series, forecasts: ForecastMap, asset: str) -> None:
+    """Plot one or more forecasts against realised volatility over their shared forecast period."""
 
-    features_df = features_df.merge(forecast, how='left', left_index=True, right_index=True)
+    start_date = min(f.index.min() for f in forecasts.values())
+    end_date = max(f.index.max() for f in forecasts.values())
+    realised_period = realised.loc[start_date:end_date]
 
-    ax = features_df[['Parkinson']].plot(figsize=(15,5))
-    features_df['Prediction'].plot(ax=ax, style='.')
-    plt.legend(['Truth Data', 'Predictions'])
-    ax.set_title('Raw Data and Predictions')
-    #plt.savefig('2014 forecast')
-    plt.show()
+    ax = realised_period.plot(figsize=(15, 5), label='Realised')
+    for name, forecast in forecasts.items():
+        forecast.plot(ax=ax, style='.', label=name)
 
-    start_date = forecast.index.min()
-    forecast_period_df = features_df.loc[start_date:]
-
-    ax = forecast_period_df[['Parkinson']].plot(figsize=(15,5))
-    forecast_period_df['Prediction'].plot(ax=ax, style='.')
-    
-    plt.legend(['Truth Data', 'Predictions'])
-    ax.set_title('Raw Data and Predictions (Forecast Period)')
+    ax.legend()
+    ax.set_title(f'Forecasts vs Realised Volatility: {asset}')
+    #plt.savefig(f'predictions_vs_realised_{asset}.png')
     plt.show()
 
 
@@ -210,8 +210,8 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
         forecast = forecast_model(test_data, model)
         forecasts.append(forecast)
 
-        print(f"Trained rows 0-{train_end-1} ({train_end} days) -> "
-              f"forecasting rows {train_end}-{forecast_end-1} ({forecast_end - train_end} days)")
+        # print(f"Trained rows 0-{train_end-1} ({train_end} days) -> "
+        #       f"forecasting rows {train_end}-{forecast_end-1} ({forecast_end - train_end} days)")
 
     return forecasts
 
