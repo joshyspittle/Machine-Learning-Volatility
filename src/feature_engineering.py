@@ -82,6 +82,19 @@ FEATURES = [
     'Price_vs_sma50',
     'Price_vs_sma200',
 
+    # Normalised Volume moving averages
+    'Normalised_Volume_sma7',
+    'Normalised_Volume_sma14',
+    'Normalised_Volume_sma21',
+    'Normalised_Volume_sma50',
+    'Normalised_Volume_sma200',
+
+    'Normalised_Volume_ema7',
+    'Normalised_Volume_ema14',
+    'Normalised_Volume_ema21',
+    'Normalised_Volume_ema50',
+    'Normalised_Volume_ema200',
+
     # Calendar
     'dayofweek',
     'quarter',
@@ -98,9 +111,12 @@ def build_ml_features(ohlcv_series: pd.DataFrame) -> pd.DataFrame:
     """Return model-ready features and the Parkinson volatility target."""
 
     df = ohlcv_series.copy()
+    #df = df.shift(1)
     realised_vol = volatility.parkinson_vol(df)
 
     df['Parkinson'] = realised_vol
+
+    Volume = df['Volume'].shift(1)
 
     lags = [0, 1, 2, 5, 10, 20, 60, 120]
 
@@ -117,8 +133,12 @@ def build_ml_features(ohlcv_series: pd.DataFrame) -> pd.DataFrame:
     for moving_average in ma_days:
         df[f'Vol_{moving_average}_sma'] = sma(realised_vol, moving_average).shift(1)
         df[f'Vol_{moving_average}_ema'] = ema(realised_vol, moving_average).shift(1)
-        df[f'Price_{moving_average}_sma'] = ema(df['Close'], moving_average).shift(1)
+        df[f'Price_{moving_average}_sma'] = sma(df['Close'], moving_average).shift(1)
         df[f'Price_{moving_average}_ema'] = ema(df['Close'], moving_average).shift(1)
+
+        
+        df[f'Normalised_Volume_sma{moving_average}'] = Volume/sma(Volume, moving_average)
+        df[f'Normalised_Volume_ema{moving_average}'] = Volume/ema(Volume, moving_average)
 
     df['Price_vs_sma7'] = df['Close'].shift(1)/df['Price_7_sma']
     df['Price_vs_sma21'] = df['Close'].shift(1)/df['Price_21_sma']

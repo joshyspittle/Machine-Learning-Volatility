@@ -55,7 +55,13 @@ def split_train_test(features_df: pd.DataFrame, split_date: str = '2024-01-01') 
     return train, test
 
 
-def train_model(train_data: TrainData) -> xgb.XGBRegressor:
+def train_model(train_data: TrainData,
+                base_score: float = 0.5,
+                n_estimators: int = 1000,
+                early_stopping_rounds: int = 50,
+                max_depth: int = 3,
+                learning_rate: float = 0.01,
+                verbose: int = 0) -> xgb.XGBRegressor:
     """Train and return the XGBoost volatility model."""
 
     x_fit = train_data['x_fit']
@@ -63,15 +69,15 @@ def train_model(train_data: TrainData) -> xgb.XGBRegressor:
     x_val = train_data['x_val']
     y_val = train_data['y_val']
 
-    model = xgb.XGBRegressor(base_score=0.5, booster='gbtree',
-                        n_estimators=1000,
-                        early_stopping_rounds=50,
+    model = xgb.XGBRegressor(base_score=base_score, booster='gbtree',
+                        n_estimators=n_estimators,
+                        early_stopping_rounds=early_stopping_rounds,
                         objective='reg:squarederror',
-                        max_depth=3,
-                        learning_rate=0.01)
+                        max_depth=max_depth,
+                        learning_rate=learning_rate)
     model.fit(x_fit, y_fit, 
             eval_set=[(x_fit, y_fit), (x_val, y_val)],
-            verbose=0)
+            verbose=verbose)
 
     return model
 
