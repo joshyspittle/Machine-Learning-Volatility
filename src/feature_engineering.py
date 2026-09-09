@@ -111,7 +111,9 @@ def build_ml_features(ohlcv_series: pd.DataFrame) -> pd.DataFrame:
     """Return model-ready features and the Parkinson volatility target."""
 
     df = ohlcv_series.copy()
-    #df = df.shift(1)
+
+    vix = load_data(paths.MACRO_DATA_PARQUET, '1d')['VIX']['Close']
+
     realised_vol = volatility.parkinson_vol(df)
 
     df['Parkinson'] = realised_vol
@@ -121,7 +123,6 @@ def build_ml_features(ohlcv_series: pd.DataFrame) -> pd.DataFrame:
     lags = [0, 1, 2, 5, 10, 20, 60, 120]
 
     for lag in lags:
-        vix = load_data(paths.MACRO_DATA_PARQUET, '1d')['VIX']['Close']
         df[f'VIX_{lag}'] = vix.reindex(df.index).ffill().shift(lag+1)
 
         df[f'Realised_vol_{lag}'] = realised_vol.shift(lag+1)

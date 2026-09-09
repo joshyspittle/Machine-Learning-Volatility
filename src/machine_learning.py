@@ -3,6 +3,7 @@
 from typing import TypeAlias, TypedDict
 
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
 
@@ -61,6 +62,7 @@ def train_model(train_data: TrainData,
                 early_stopping_rounds: int = 50,
                 max_depth: int = 3,
                 learning_rate: float = 0.01,
+                min_child_weight: int = 1,
                 verbose: int = 0) -> xgb.XGBRegressor:
     """Train and return the XGBoost volatility model."""
 
@@ -74,7 +76,8 @@ def train_model(train_data: TrainData,
                         early_stopping_rounds=early_stopping_rounds,
                         objective='reg:squarederror',
                         max_depth=max_depth,
-                        learning_rate=learning_rate)
+                        learning_rate=learning_rate,
+                        min_child_weight=min_child_weight)
     model.fit(x_fit, y_fit, 
             eval_set=[(x_fit, y_fit), (x_val, y_val)],
             verbose=verbose)
@@ -188,14 +191,19 @@ def plot_predictions_vs_realised(realised: pd.Series, forecasts: ForecastMap, as
     plt.show()
 
 
-def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd.Series]:
+def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90,
+                n_estimators: int = 1000,
+                early_stopping_rounds: int = 50,
+                max_depth: int = 3,
+                learning_rate: float = 0.01,
+                min_child_weight: int = 1,
+                verbose: int = 0) -> list[pd.Series]:
     """Retrain on an expanding window every `window_length` days, forecasting the next block each time."""
 
     features_df = fe.build_ml_features(ohlcv_series).dropna()
     n = len(features_df)
 
     forecasts = []
-    importances = []
     for train_end in range(window_length, n, window_length):
         forecast_end = min(train_end + window_length, n)
 
@@ -212,7 +220,14 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
         train_data = {'x_fit': x_fit, 'y_fit': y_fit, 'x_val': x_val, 'y_val': y_val}
         test_data = {'x_test': forecast_df[fe.FEATURES], 'y_test': forecast_df[fe.TARGET]}
 
-        model = train_model(train_data)
+        model = train_model(train_data,
+                            base_score=np.mean(x_fit['Realised_vol_0']),
+                            n_estimators=n_estimators,
+                            early_stopping_rounds=early_stopping_rounds,
+                            max_depth=max_depth,
+                            learning_rate=learning_rate,
+                            min_child_weight=min_child_weight,
+                            verbose=verbose)
         forecast = forecast_model(test_data, model)
         forecasts.append(forecast)
 
@@ -222,18 +237,32 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90) -> list[pd
     return forecasts
 
 
-def run_walk_forward_comparison(ohlcv_series):
+def run_walk_forward_comparison(ohlcv_series,
+                n_estimators: int = 1000,
+                early_stopping_rounds: int = 50,
+                max_depth: int = 3,
+                learning_rate: float = 0.01,
+                min_child_weight: int = 1,
+                verbose: int = 0):
 
     close_series = ohlcv_series['Close']
     realised_vol = volatility.parkinson_vol(ohlcv_series)
 
+    garch_forecast = volatility.garch_forecast(close_series, 500)
+
     benchmarks = {
-        'GARCH(1,1)': volatility.garch_forecast(close_series, 500),
+        'GARCH(1,1)': garch_forecast,
         'Naive (persistence)': volatility.naive_persistent_forecast(realised_vol),
         'Naive (rolling avg)': volatility.naive_avg_forecast(realised_vol, 500),
     }
 
-    forecasts = walk_forward(ohlcv_series, 90)
+    forecasts = walk_forward(ohlcv_series, 90,                            
+                            n_estimators=n_estimators,
+                            early_stopping_rounds=early_stopping_rounds,
+                            max_depth=max_depth,
+                            learning_rate=learning_rate,
+                            min_child_weight=min_child_weight,
+                            verbose=verbose)
 
     per_block_results = {}
     for i, forecast in enumerate(forecasts):
@@ -275,3 +304,41 @@ def plot_walk_forward(realised_vol, forecasts, per_block, asset):
     ax.legend()
     #plt.savefig(f'MLvsGARCH(QLIKE)({asset}).png')
     plt.show()
+
+
+def run_hyperparameter_sweep(asset_ohlcv: pd.DataFrame, param_name: str, values: list) -> pd.DataFrame:
+    """Run a walk-forward comparison for each value of one hyperparameter, returning a summary table."""
+
+    rows = []
+    garch_row = None
+
+    for value in values:
+        results_per_block, results_combined, _ = run_walk_forward_comparison(
+            asset_ohlcv, **{param_name: value}
+        )
+
+        if garch_row is None:
+            garch_row = results_combined['GARCH(1,1)']
+
+        block_rows = [
+            {'Block': block, 'Model': model, **metrics}
+            for block, models in results_per_block.items()
+            for model, metrics in models.items()
+        ]
+        block_df = pd.DataFrame(block_rows)
+        ml_block_stats = block_df[block_df['Model'] == 'ML Model']['qlike'].agg(['median', 'std'])
+
+        rows.append({
+            param_name: value,
+            'qlike': results_combined['ML Model (Walk-Forward)']['qlike'],
+            'mse': results_combined['ML Model (Walk-Forward)']['mse'],
+            'mae': results_combined['ML Model (Walk-Forward)']['mae'],
+            'qlike_median': ml_block_stats['median'],
+            'qlike_std': ml_block_stats['std'],
+        })
+
+    summary = pd.DataFrame(rows).set_index(param_name).round(4)
+
+    print(f"GARCH(1,1) benchmark: qlike={garch_row['qlike']:.4f}, "
+          f"mse={garch_row['mse']:.4f}, mae={garch_row['mae']:.4f}")
+    return summary
