@@ -192,6 +192,7 @@ def plot_predictions_vs_realised(realised: pd.Series, forecasts: ForecastMap, as
 
 
 def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90,
+                base_score = 0.5,
                 n_estimators: int = 1000,
                 early_stopping_rounds: int = 50,
                 max_depth: int = 3,
@@ -220,8 +221,15 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90,
         train_data = {'x_fit': x_fit, 'y_fit': y_fit, 'x_val': x_val, 'y_val': y_val}
         test_data = {'x_test': forecast_df[fe.FEATURES], 'y_test': forecast_df[fe.TARGET]}
 
+        if base_score == 'mean':
+            base_score = np.mean(x_fit['Realised_vol_0'])
+        elif base_score == 'median':
+            base_score = np.median(x_fit['Realised_vol_0'])
+        else:
+            base_score = 0.5
+
         model = train_model(train_data,
-                            base_score=np.mean(x_fit['Realised_vol_0']),
+                            base_score=base_score,
                             n_estimators=n_estimators,
                             early_stopping_rounds=early_stopping_rounds,
                             max_depth=max_depth,
@@ -238,12 +246,13 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90,
 
 
 def run_walk_forward_comparison(ohlcv_series,
-                n_estimators: int = 1000,
-                early_stopping_rounds: int = 50,
-                max_depth: int = 3,
-                learning_rate: float = 0.01,
-                min_child_weight: int = 1,
-                verbose: int = 0):
+                                base_score = 0.5,
+                                n_estimators: int = 1000,
+                                early_stopping_rounds: int = 50,
+                                max_depth: int = 3,
+                                learning_rate: float = 0.01,
+                                min_child_weight: int = 1,
+                                verbose: int = 0):
 
     close_series = ohlcv_series['Close']
     realised_vol = volatility.parkinson_vol(ohlcv_series)
@@ -256,7 +265,8 @@ def run_walk_forward_comparison(ohlcv_series,
         'Naive (rolling avg)': volatility.naive_avg_forecast(realised_vol, 500),
     }
 
-    forecasts = walk_forward(ohlcv_series, 90,                            
+    forecasts = walk_forward(ohlcv_series, 90,
+                            base_score=base_score,                            
                             n_estimators=n_estimators,
                             early_stopping_rounds=early_stopping_rounds,
                             max_depth=max_depth,
@@ -314,7 +324,7 @@ def run_hyperparameter_sweep(asset_ohlcv: pd.DataFrame, param_name: str, values:
 
     for value in values:
         results_per_block, results_combined, _ = run_walk_forward_comparison(
-            asset_ohlcv, **{param_name: value}
+            asset_ohlcv, base_score='mean', **{param_name: value}
         )
 
         if garch_row is None:
