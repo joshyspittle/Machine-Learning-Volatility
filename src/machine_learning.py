@@ -222,14 +222,14 @@ def walk_forward(ohlcv_series: pd.DataFrame, window_length: int = 90,
         test_data = {'x_test': forecast_df[fe.FEATURES], 'y_test': forecast_df[fe.TARGET]}
 
         if base_score == 'mean':
-            base_score = np.mean(x_fit['Realised_vol_0'])
+            calculated_base_score = np.mean(x_fit['Realised_vol_0'])
         elif base_score == 'median':
-            base_score = np.median(x_fit['Realised_vol_0'])
+            calculated_base_score = np.median(x_fit['Realised_vol_0'])
         else:
-            base_score = 0.5
+            calculated_base_score = 0.5
 
         model = train_model(train_data,
-                            base_score=base_score,
+                            base_score=calculated_base_score,
                             n_estimators=n_estimators,
                             early_stopping_rounds=early_stopping_rounds,
                             max_depth=max_depth,
